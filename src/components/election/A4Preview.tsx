@@ -6,15 +6,19 @@ import { useEffect, useRef, useState } from "react";
 const PAGE_W = 1123;
 const PAGE_H = 794;
 
+const BOX_SIZE = 24;
+const BOX_GAP = 3;
+
 function DigitBoxes({ digits }: { digits: string }) {
   return (
-    <div style={{ display: "inline-flex", gap: 2, verticalAlign: "middle" }}>
+    <div style={{ display: "flex", gap: BOX_GAP }}>
       {digits.split("").map((d, i) => (
         <div
           key={i}
           style={{
-            width: 22,
-            height: 22,
+            width: BOX_SIZE,
+            height: BOX_SIZE,
+            boxSizing: "border-box",
             border: "1.2px solid #000",
             display: "flex",
             alignItems: "center",
@@ -40,12 +44,25 @@ function DottedLine({ width }: { width: number }) {
         left: 0,
         bottom: 0,
         width,
-        borderBottom: "1.5px dotted #000",
-        height: 1,
+        height: 2,
+        backgroundImage:
+          "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
+        backgroundSize: "6px 2px",
+        backgroundRepeat: "repeat-x",
+        backgroundPosition: "left bottom",
       }}
     />
   );
 }
+
+// Shared column geometry so every row aligns perfectly
+const LABEL_X = 40;
+const LABEL_W = 190;
+const DOTTED_X = LABEL_X + LABEL_W;
+const DOTTED_W = 258;
+const CODE_LABEL_X = DOTTED_X + DOTTED_W + 12;
+const CODE_LABEL_W = 34;
+const BOX_X = CODE_LABEL_X + CODE_LABEL_W + 8;
 
 function FormRow({
   y,
@@ -58,13 +75,6 @@ function FormRow({
   value: string;
   digits: string;
 }) {
-  const LABEL_X = 40;
-  const LABEL_W = 180;
-  const DOTTED_X = LABEL_X + LABEL_W;
-  const DOTTED_W = 260;
-  const CODE_LABEL_X = DOTTED_X + DOTTED_W + 16;
-  const BOX_X = CODE_LABEL_X + 42;
-
   return (
     <div style={{ position: "absolute", left: 0, top: y, width: "100%", height: 40 }}>
       <div
@@ -93,15 +103,16 @@ function FormRow({
           style={{
             position: "absolute",
             left: 0,
-            right: 0,
+            width: DOTTED_W,
             bottom: 4,
             textAlign: "center",
             fontFamily: "Arial, sans-serif",
             fontSize: 13,
             fontWeight: 700,
             lineHeight: 1.15,
-            whiteSpace: "normal",
-            wordBreak: "break-word",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {value}
@@ -113,6 +124,7 @@ function FormRow({
           position: "absolute",
           left: CODE_LABEL_X,
           bottom: 4,
+          width: CODE_LABEL_W,
           fontFamily: "Arial, sans-serif",
           fontSize: 13,
           fontWeight: 700,
@@ -120,7 +132,13 @@ function FormRow({
       >
         Code
       </div>
-      <div style={{ position: "absolute", left: BOX_X, bottom: 4 }}>
+      <div
+        style={{
+          position: "absolute",
+          left: BOX_X,
+          bottom: 2,
+        }}
+      >
         <DigitBoxes digits={digits} />
       </div>
     </div>
