@@ -46,7 +46,7 @@ function Workspace() {
       </header>
 
       <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup orientation="horizontal">
           <ResizablePanel defaultSize={22} minSize={15}>
             <Spreadsheet />
           </ResizablePanel>
