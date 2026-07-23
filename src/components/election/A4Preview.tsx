@@ -59,11 +59,11 @@ function FormRow({
   digits: string;
 }) {
   const LABEL_X = 40;
-  const LABEL_W = 200;
+  const LABEL_W = 180;
   const DOTTED_X = LABEL_X + LABEL_W;
-  const DOTTED_W = 380;
-  const CODE_LABEL_X = DOTTED_X + DOTTED_W + 20;
-  const BOX_X = CODE_LABEL_X + 55;
+  const DOTTED_W = 260;
+  const CODE_LABEL_X = DOTTED_X + DOTTED_W + 16;
+  const BOX_X = CODE_LABEL_X + 42;
 
   return (
     <div style={{ position: "absolute", left: 0, top: y, width: "100%", height: 40 }}>
@@ -255,7 +255,7 @@ export function A4Preview() {
             />
           </div>
 
-          <ResultsTable x={780} y={140} sn={record?.sn || "0001"} />
+          <ResultsTable x={640} y={140} sn={record?.sn || "0001"} />
         </div>
       </div>
     </div>
