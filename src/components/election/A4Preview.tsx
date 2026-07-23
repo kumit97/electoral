@@ -255,7 +255,7 @@ export function A4Preview() {
             />
           </div>
 
-          <ResultsTable x={780} y={140} sn={record?.sn || "0001"} />
+          <ResultsTable x={640} y={140} sn={record?.sn || "0001"} />
         </div>
       </div>
     </div>
