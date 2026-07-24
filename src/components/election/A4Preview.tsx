@@ -317,23 +317,15 @@ export function A4Preview() {
             position: "relative",
           }}
         >
-          {/* Form area */}
-          <div style={{ position: "absolute", left: 0, top: 90, width: 720, height: 300 }}>
-            <FormRow y={0} label="State" value={record?.state || ""} digits={parts.state} />
-            <FormRow y={60} label="Area Council" value={record?.areaCouncil || ""} digits={parts.areaCouncil} />
-            <FormRow
-              y={120}
-              label="Registration Area (WARD)"
-              value={record?.ward || ""}
-              digits={parts.ward}
-            />
-            <FormRow
-              y={180}
-              label="Polling Unit"
-              value={record?.pollingUnit || ""}
-              digits={parts.pollingUnit}
-            />
-          </div>
+          {/* Left information section (fixed 5-column layout) */}
+          <InfoSection
+            state={record?.state || ""}
+            areaCouncil={record?.areaCouncil || ""}
+            ward={record?.ward || ""}
+            pollingUnit={record?.pollingUnit || ""}
+            parts={parts}
+          />
+
 
           <ResultsTable x={640} y={140} sn={record?.sn || "0001"} />
         </div>
