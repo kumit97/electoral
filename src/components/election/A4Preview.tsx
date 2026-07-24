@@ -8,19 +8,23 @@ const PAGE_H = 794;
 
 
 // ---- LEFT INFORMATION SECTION -------------------------------------------
-// Fixed 5-column layout. All X coordinates are absolute and NEVER shift
-// depending on text length.
-const COL_LABEL_X = 24;
-const COL_LABEL_W = 178;
-const COL_DOTTED_X = 205;
-const COL_DOTTED_W = 275;
+// Layout: [Label ....dotted line....] [Code label] [Code boxes]
+// The dotted line starts immediately after the label text and extends up to
+// the Code label. The value sits centered above the dotted line and wraps.
+const SECTION_X = 24;
+const SECTION_W = 600;
 const COL_CODE_LABEL_X = 488;
-const COL_CODE_LABEL_W = 34;
-const COL_BOXES_X = 528;
+const COL_CODE_LABEL_W = 40;
+const COL_BOXES_X = 532;
 
-const ROW_H = 46;
-const BOX_SIZE = 24;
+const ROW_H = 54;
+const BOX_SIZE = 26;
 const BOX_GAP = 3;
+
+const VALUE_FONT =
+  "'Times New Roman', 'Liberation Serif', Georgia, serif";
+const VALUE_SIZE = 15;
+const LABEL_SIZE = 14;
 
 function DigitBoxes({ digits }: { digits: string }) {
   return (
@@ -37,7 +41,7 @@ function DigitBoxes({ digits }: { digits: string }) {
             alignItems: "center",
             justifyContent: "center",
             fontFamily: "Arial, sans-serif",
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 700,
             lineHeight: 1,
           }}
@@ -60,76 +64,85 @@ function InfoRow({
   value: string;
   digits: string;
 }) {
-  // Baseline of the dotted line inside the row
-  const BASELINE = ROW_H - 8;
+  const BASELINE = ROW_H - 10;
+  const INLINE_RIGHT = COL_CODE_LABEL_X - SECTION_X - 8;
 
   return (
     <>
-      {/* Column 1: Label */}
+      {/* Inline: "Label ................................" */}
       <div
         style={{
           position: "absolute",
-          left: COL_LABEL_X,
+          left: SECTION_X,
           top: y,
-          width: COL_LABEL_W,
-          height: ROW_H,
-          display: "flex",
-          alignItems: "flex-end",
-          fontFamily: "Arial, sans-serif",
-          fontSize: 13,
-          fontWeight: 700,
-          lineHeight: 1.15,
-        }}
-      >
-        {label}
-      </div>
-
-      {/* Columns 2 + 3: fixed-width dotted line with the value centered above it */}
-      <div
-        style={{
-          position: "absolute",
-          left: COL_DOTTED_X,
-          top: y,
-          width: COL_DOTTED_W,
+          width: INLINE_RIGHT,
           height: ROW_H,
         }}
       >
-        {/* Centered value, wraps only inside this fixed area */}
         <div
           style={{
             position: "absolute",
             left: 0,
             right: 0,
-            bottom: BASELINE + 2,
-            maxHeight: ROW_H - 10,
-            overflow: "hidden",
-            textAlign: "center",
-            fontFamily: "Arial, sans-serif",
-            fontSize: 12.5,
-            fontWeight: 700,
-            lineHeight: 1.1,
-            wordBreak: "break-word",
+            top: BASELINE - 16,
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 6,
           }}
         >
-          {value}
+          <span
+            style={{
+              fontFamily: VALUE_FONT,
+              fontSize: LABEL_SIZE,
+              fontWeight: 700,
+              lineHeight: 1,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {label}
+          </span>
+          <span style={{ flex: 1, height: 16, position: "relative" }}>
+            <span
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 2,
+                height: 2,
+                backgroundImage:
+                  "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
+                backgroundSize: "6px 2px",
+                backgroundRepeat: "repeat-x",
+              }}
+            />
+          </span>
         </div>
-        {/* Fixed-width dotted line */}
+
+        {/* Value centered above the dotted portion; wraps inside area */}
         <div
           style={{
             position: "absolute",
             left: 0,
-            top: BASELINE,
-            width: COL_DOTTED_W,
-            height: 2,
-            backgroundImage:
-              "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
-            backgroundSize: "6px 2px",
-            backgroundRepeat: "repeat-x",
+            right: 0,
+            bottom: ROW_H - BASELINE + 2,
+            maxHeight: ROW_H - 12,
+            overflow: "hidden",
+            textAlign: "center",
+            paddingLeft: `calc(${label.length}ch + 12px)`,
+            paddingRight: 8,
+            fontFamily: VALUE_FONT,
+            fontSize: VALUE_SIZE,
+            fontWeight: 700,
+            fontStyle: "italic",
+            lineHeight: 1.15,
+            wordBreak: "break-word",
+            whiteSpace: "normal",
           }}
-        />
+        >
+          {value}
+        </div>
       </div>
 
-      {/* Column 4: Code label — fixed X on every row */}
       <div
         style={{
           position: "absolute",
@@ -139,7 +152,7 @@ function InfoRow({
           height: ROW_H,
           display: "flex",
           alignItems: "flex-end",
-          paddingBottom: 4,
+          paddingBottom: 6,
           fontFamily: "Arial, sans-serif",
           fontSize: 13,
           fontWeight: 700,
@@ -148,7 +161,6 @@ function InfoRow({
         Code
       </div>
 
-      {/* Column 5: Code boxes — fixed X on every row */}
       <div
         style={{
           position: "absolute",
@@ -157,7 +169,7 @@ function InfoRow({
           height: ROW_H,
           display: "flex",
           alignItems: "flex-end",
-          paddingBottom: 2,
+          paddingBottom: 4,
         }}
       >
         <DigitBoxes digits={digits} />
@@ -185,7 +197,7 @@ function InfoSection({
         position: "absolute",
         left: 0,
         top: 90,
-        width: 620,
+        width: SECTION_W,
         height: ROW_H * 4 + 20,
       }}
     >
