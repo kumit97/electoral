@@ -82,14 +82,19 @@ function labelRow(label: string, value: string, codeLabel: string, digits: strin
       }),
       new TableCell({
         width: { size: 4800, type: WidthType.DXA },
-        borders: {
-          ...noBorders,
-          bottom: { style: BorderStyle.DOTTED, size: 6, color: "000000" },
-        },
+        borders: noBorders,
         verticalAlign: VerticalAlign.BOTTOM,
         children: [
           new Paragraph({
             alignment: AlignmentType.CENTER,
+            border: {
+              bottom: {
+                style: BorderStyle.DOTTED,
+                size: 6,
+                color: "000000",
+                space: 2,
+              },
+            },
             children: [new TextRun({ text: value, bold: true, size: 22 })],
           }),
         ],
