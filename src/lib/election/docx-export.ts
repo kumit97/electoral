@@ -144,15 +144,15 @@ function labelRow(
 const PAGE_PROPERTIES = {
   page: {
     size: {
-      width: 16838,
-      height: 11906,
-      orientation: PageOrientation.LANDSCAPE,
+      width: 11906,
+      height: 16838,
+      orientation: PageOrientation.PORTRAIT,
     },
     margin: { top: 1000, right: 1000, bottom: 1000, left: 1000 },
   },
 };
 
-function buildRecordTable(record: ElectionRecord, settings: FormSettings): Table {
+function buildRecordContent(record: ElectionRecord, settings: FormSettings): (Table | Paragraph)[] {
   const parts = parseDelimitationCode(record.delimitationCode);
   const infoFont = docxFont(settings.infoFontFamily);
   const infoSize = docxSize(settings.infoFontSize);
@@ -179,8 +179,7 @@ function buildRecordTable(record: ElectionRecord, settings: FormSettings): Table
   });
 
   if (!settings.showResultsTable) {
-    // Single-column layout: just the form fields, no right-hand results table.
-    return leftTable;
+    return [leftTable];
   }
 
   const RESULTS_KEY_COL = 400;
@@ -246,39 +245,15 @@ function buildRecordTable(record: ElectionRecord, settings: FormSettings): Table
     ],
   });
 
-  const RIGHT_COL_W = RESULTS_KEY_COL + RESULTS_LABEL_COL + RESULTS_VALUE_COL + 300;
-
-  // Two-column outer table: left = form fields, right = S/N + results
-  return new Table({
-    width: { size: 8900 + RIGHT_COL_W, type: WidthType.DXA },
-    columnWidths: [8900, RIGHT_COL_W],
-    borders: {
-      top: noBorder,
-      bottom: noBorder,
-      left: noBorder,
-      right: noBorder,
-      insideHorizontal: noBorder,
-      insideVertical: noBorder,
-    },
-    rows: [
-      new TableRow({
-        children: [
-          new TableCell({
-            width: { size: 8900, type: WidthType.DXA },
-            borders: noBorders,
-            verticalAlign: VerticalAlign.TOP,
-            children: [leftTable],
-          }),
-          new TableCell({
-            width: { size: RIGHT_COL_W, type: WidthType.DXA },
-            borders: noBorders,
-            verticalAlign: VerticalAlign.TOP,
-            children: [snParagraph, new Paragraph(""), resultsTable],
-          }),
-        ],
-      }),
-    ],
-  });
+  // Portrait width can't fit the form fields and results table side by
+  // side, so the results table stacks below the info table instead.
+  return [
+    leftTable,
+    new Paragraph(""),
+    snParagraph,
+    new Paragraph(""),
+    resultsTable,
+  ];
 }
 
 function buildDocument(record: ElectionRecord, settings: FormSettings): Document {
@@ -289,7 +264,7 @@ function buildDocument(record: ElectionRecord, settings: FormSettings): Document
     sections: [
       {
         properties: PAGE_PROPERTIES,
-        children: [buildRecordTable(record, settings)],
+        children: buildRecordContent(record, settings),
       },
     ],
   });
@@ -307,7 +282,7 @@ function buildMergedDocument(records: ElectionRecord[], settings: FormSettings):
     },
     sections: records.map((record) => ({
       properties: PAGE_PROPERTIES,
-      children: [buildRecordTable(record, settings)],
+      children: buildRecordContent(record, settings),
     })),
   });
 }

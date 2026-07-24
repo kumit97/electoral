@@ -2,9 +2,9 @@ import { useElectionStore } from "@/lib/election/store";
 import { parseDelimitationCode, RESULT_ROWS } from "@/lib/election/types";
 import { useEffect, useRef, useState } from "react";
 
-// A4 landscape at 96dpi: 1123 x 794. The reference form is wider than tall.
-const PAGE_W = 1123;
-const PAGE_H = 794;
+// A4 portrait at 96dpi: 794 x 1123.
+const PAGE_W = 794;
+const PAGE_H = 1123;
 
 
 // ---- LEFT INFORMATION SECTION -------------------------------------------
@@ -21,9 +21,12 @@ const ROW_H = 54;
 const BOX_SIZE = 26;
 const BOX_GAP = 3;
 
-// 0.5cm gap (at 96dpi) between the digit boxes and the results table
-const CM_TO_PX = 96 / 2.54;
-const CODE_TO_TABLE_GAP = Math.round(0.5 * CM_TO_PX);
+// Vertical gap between the info section and the results table below it.
+// Must clear the S/N label, which floats 50px above the table itself.
+const SECTION_TO_TABLE_GAP = 70;
+
+const INFO_SECTION_TOP = 90;
+const INFO_SECTION_HEIGHT = ROW_H * 4 + 20;
 
 function DigitBoxes({ digits }: { digits: string }) {
   return (
@@ -204,9 +207,9 @@ function InfoSection({
       style={{
         position: "absolute",
         left: 0,
-        top: 90,
+        top: INFO_SECTION_TOP,
         width: SECTION_W,
-        height: ROW_H * 4 + 20,
+        height: INFO_SECTION_HEIGHT,
       }}
     >
       <InfoRow y={0} label="State" value={state} digits={parts.state} fontFamily={fontFamily} fontSize={fontSize} />
@@ -338,9 +341,10 @@ export function A4Preview() {
 
   const parts = parseDelimitationCode(record?.delimitationCode || "");
 
-  // Widest digit-box row is Polling Unit (3 boxes) -- table sits just past it.
-  const codeBoxesRight = COL_BOXES_X + BOX_SIZE * 3 + BOX_GAP * 2;
-  const resultsTableX = codeBoxesRight + CODE_TO_TABLE_GAP;
+  // Portrait is narrower, so the results table stacks below the info
+  // section (left-aligned, same margin) instead of sitting beside it.
+  const resultsTableX = SECTION_X;
+  const resultsTableY = INFO_SECTION_TOP + INFO_SECTION_HEIGHT + SECTION_TO_TABLE_GAP;
 
   return (
     <div
