@@ -2,8 +2,8 @@ import { useElectionStore } from "@/lib/election/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { exportRecordToDocx, exportRecordsToZip } from "@/lib/election/docx-export";
-import { FileDown, Package } from "lucide-react";
+import { exportRecordToDocx, exportRecordsMergedToDocx } from "@/lib/election/docx-export";
+import { FileDown, FileStack } from "lucide-react";
 import { toast } from "sonner";
 
 export function PropertiesPanel() {
@@ -23,9 +23,9 @@ export function PropertiesPanel() {
   const exportAll = async () => {
     if (records.length === 0) return;
     try {
-      toast.info(`Generating ${records.length} documents...`);
-      await exportRecordsToZip(records);
-      toast.success("ZIP exported");
+      toast.info(`Merging ${records.length} records into one document...`);
+      await exportRecordsMergedToDocx(records);
+      toast.success("Merged Word document exported");
     } catch (e) {
       toast.error("Export failed: " + (e as Error).message);
     }
@@ -95,7 +95,7 @@ export function PropertiesPanel() {
           onClick={exportAll}
           disabled={records.length === 0}
         >
-          <Package className="mr-1 h-3.5 w-3.5" /> Export All as ZIP
+          <FileStack className="mr-1 h-3.5 w-3.5" /> Export All (Merged .docx)
         </Button>
       </div>
     </div>

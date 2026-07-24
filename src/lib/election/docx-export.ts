@@ -115,7 +115,18 @@ function labelRow(label: string, value: string, codeLabel: string, digits: strin
   });
 }
 
-function buildDocument(record: ElectionRecord): Document {
+const PAGE_PROPERTIES = {
+  page: {
+    size: {
+      width: 16838,
+      height: 11906,
+      orientation: PageOrientation.LANDSCAPE,
+    },
+    margin: { top: 1000, right: 1000, bottom: 1000, left: 1000 },
+  },
+};
+
+function buildRecordTable(record: ElectionRecord): Table {
   const parts = parseDelimitationCode(record.delimitationCode);
 
   const leftTable = new Table({
@@ -137,39 +148,46 @@ function buildDocument(record: ElectionRecord): Document {
     ],
   });
 
+  const RESULTS_KEY_COL = 400;
+  const RESULTS_LABEL_COL = 3300;
+  const RESULTS_VALUE_COL = 700;
+
   const resultsTable = new Table({
-    width: { size: 5400, type: WidthType.DXA },
-    columnWidths: [500, 3600, 1300],
+    width: {
+      size: RESULTS_KEY_COL + RESULTS_LABEL_COL + RESULTS_VALUE_COL,
+      type: WidthType.DXA,
+    },
+    columnWidths: [RESULTS_KEY_COL, RESULTS_LABEL_COL, RESULTS_VALUE_COL],
     rows: RESULT_ROWS.map(
       (r) =>
         new TableRow({
-          height: { value: 340, rule: HeightRule.ATLEAST },
+          height: { value: 320, rule: HeightRule.ATLEAST },
           children: [
             new TableCell({
-              width: { size: 500, type: WidthType.DXA },
+              width: { size: RESULTS_KEY_COL, type: WidthType.DXA },
               borders: allBorders,
               verticalAlign: VerticalAlign.CENTER,
               shading: { fill: "F5F5F5", type: ShadingType.CLEAR, color: "auto" },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [new TextRun({ text: `#${r.key}`, bold: true, size: 18 })],
+                  children: [new TextRun({ text: `#${r.key}`, bold: true, size: 16 })],
                 }),
               ],
             }),
             new TableCell({
-              width: { size: 3600, type: WidthType.DXA },
+              width: { size: RESULTS_LABEL_COL, type: WidthType.DXA },
               borders: allBorders,
               verticalAlign: VerticalAlign.CENTER,
-              margins: { left: 100, right: 60, top: 40, bottom: 40 },
+              margins: { left: 80, right: 50, top: 30, bottom: 30 },
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: r.label, size: 18 })],
+                  children: [new TextRun({ text: r.label, size: 16 })],
                 }),
               ],
             }),
             new TableCell({
-              width: { size: 1300, type: WidthType.DXA },
+              width: { size: RESULTS_VALUE_COL, type: WidthType.DXA },
               borders: allBorders,
               children: [new Paragraph("")],
             }),
@@ -191,10 +209,12 @@ function buildDocument(record: ElectionRecord): Document {
     ],
   });
 
+  const RIGHT_COL_W = RESULTS_KEY_COL + RESULTS_LABEL_COL + RESULTS_VALUE_COL + 300;
+
   // Two-column outer table: left = form fields, right = S/N + results
-  const outer = new Table({
-    width: { size: 14400, type: WidthType.DXA },
-    columnWidths: [8900, 5500],
+  return new Table({
+    width: { size: 8900 + RIGHT_COL_W, type: WidthType.DXA },
+    columnWidths: [8900, RIGHT_COL_W],
     borders: {
       top: noBorder,
       bottom: noBorder,
@@ -213,7 +233,7 @@ function buildDocument(record: ElectionRecord): Document {
             children: [leftTable],
           }),
           new TableCell({
-            width: { size: 5500, type: WidthType.DXA },
+            width: { size: RIGHT_COL_W, type: WidthType.DXA },
             borders: noBorders,
             verticalAlign: VerticalAlign.TOP,
             children: [snParagraph, new Paragraph(""), resultsTable],
@@ -222,26 +242,36 @@ function buildDocument(record: ElectionRecord): Document {
       }),
     ],
   });
+}
 
+function buildDocument(record: ElectionRecord): Document {
   return new Document({
     styles: {
       default: { document: { run: { font: "Arial", size: 22 } } },
     },
     sections: [
       {
-        properties: {
-          page: {
-            size: {
-              width: 16838,
-              height: 11906,
-              orientation: PageOrientation.LANDSCAPE,
-            },
-            margin: { top: 1000, right: 1000, bottom: 1000, left: 1000 },
-          },
-        },
-        children: [outer],
+        properties: PAGE_PROPERTIES,
+        children: [buildRecordTable(record)],
       },
     ],
+  });
+}
+
+/**
+ * Builds a single merged Word document containing every record, one per
+ * page (each record starts on a new page since every entry in `sections`
+ * begins on a fresh page by default).
+ */
+function buildMergedDocument(records: ElectionRecord[]): Document {
+  return new Document({
+    styles: {
+      default: { document: { run: { font: "Arial", size: 22 } } },
+    },
+    sections: records.map((record) => ({
+      properties: PAGE_PROPERTIES,
+      children: [buildRecordTable(record)],
+    })),
   });
 }
 
@@ -249,6 +279,15 @@ export async function exportRecordToDocx(record: ElectionRecord) {
   const doc = buildDocument(record);
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `EC8A_${record.sn || "record"}.docx`);
+}
+
+/**
+ * Exports all records merged into a single .docx file, one record per page.
+ */
+export async function exportRecordsMergedToDocx(records: ElectionRecord[]) {
+  const doc = buildMergedDocument(records);
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `EC8A_forms_merged_${records.length}.docx`);
 }
 
 export async function exportRecordsToZip(records: ElectionRecord[]) {

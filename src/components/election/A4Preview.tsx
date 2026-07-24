@@ -219,9 +219,13 @@ function InfoSection({
   );
 }
 
+const RESULTS_TABLE_W = 380;
+const RESULTS_KEY_COL_W = 28;
+const RESULTS_VALUE_COL_W = 64;
+
 function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
   return (
-    <div style={{ position: "absolute", left: x, top: y, width: 460 }}>
+    <div style={{ position: "absolute", left: x, top: y, width: RESULTS_TABLE_W }}>
       <div
         style={{
           position: "absolute",
@@ -241,8 +245,9 @@ function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
         style={{
           borderCollapse: "collapse",
           width: "100%",
+          tableLayout: "fixed",
           fontFamily: "Arial, sans-serif",
-          fontSize: 11.5,
+          fontSize: 10.5,
         }}
       >
         <tbody>
@@ -251,7 +256,7 @@ function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
               <td
                 style={{
                   border: "1px solid #000",
-                  width: 36,
+                  width: RESULTS_KEY_COL_W,
                   textAlign: "center",
                   fontWeight: 700,
                   padding: "3px 2px",
@@ -263,7 +268,8 @@ function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
               <td
                 style={{
                   border: "1px solid #000",
-                  padding: "3px 8px",
+                  padding: "3px 6px",
+                  lineHeight: 1.15,
                 }}
               >
                 {r.label}
@@ -271,8 +277,8 @@ function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
               <td
                 style={{
                   border: "1px solid #000",
-                  width: 90,
-                  padding: "3px 6px",
+                  width: RESULTS_VALUE_COL_W,
+                  padding: "3px 4px",
                 }}
               />
             </tr>
@@ -339,7 +345,11 @@ export function A4Preview() {
           />
 
 
-          <ResultsTable x={640} y={140} sn={record?.sn || "0001"} />
+          <ResultsTable
+            x={PAGE_W - SECTION_X - RESULTS_TABLE_W}
+            y={140}
+            sn={record?.sn || "0001"}
+          />
         </div>
       </div>
     </div>
