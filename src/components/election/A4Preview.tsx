@@ -21,10 +21,9 @@ const ROW_H = 54;
 const BOX_SIZE = 26;
 const BOX_GAP = 3;
 
-const VALUE_FONT =
-  "'Times New Roman', 'Liberation Serif', Georgia, serif";
-const VALUE_SIZE = 15;
-const LABEL_SIZE = 14;
+// 0.5cm gap (at 96dpi) between the digit boxes and the results table
+const CM_TO_PX = 96 / 2.54;
+const CODE_TO_TABLE_GAP = Math.round(0.5 * CM_TO_PX);
 
 function DigitBoxes({ digits }: { digits: string }) {
   return (
@@ -58,14 +57,19 @@ function InfoRow({
   label,
   value,
   digits,
+  fontFamily,
+  fontSize,
 }: {
   y: number;
   label: string;
   value: string;
   digits: string;
+  fontFamily: string;
+  fontSize: number;
 }) {
   const BASELINE = ROW_H - 10;
   const INLINE_RIGHT = COL_CODE_LABEL_X - SECTION_X - 8;
+  const labelSize = Math.round(fontSize * 0.93);
 
   return (
     <>
@@ -92,8 +96,8 @@ function InfoRow({
         >
           <span
             style={{
-              fontFamily: VALUE_FONT,
-              fontSize: LABEL_SIZE,
+              fontFamily,
+              fontSize: labelSize,
               fontWeight: 700,
               lineHeight: 1,
               whiteSpace: "nowrap",
@@ -130,8 +134,8 @@ function InfoRow({
             textAlign: "center",
             paddingLeft: `calc(${label.length}ch + 12px)`,
             paddingRight: 8,
-            fontFamily: VALUE_FONT,
-            fontSize: VALUE_SIZE,
+            fontFamily,
+            fontSize,
             fontWeight: 700,
             fontStyle: "italic",
             lineHeight: 1.15,
@@ -184,12 +188,16 @@ function InfoSection({
   ward,
   pollingUnit,
   parts,
+  fontFamily,
+  fontSize,
 }: {
   state: string;
   areaCouncil: string;
   ward: string;
   pollingUnit: string;
   parts: ReturnType<typeof parseDelimitationCode>;
+  fontFamily: string;
+  fontSize: number;
 }) {
   return (
     <div
@@ -201,19 +209,23 @@ function InfoSection({
         height: ROW_H * 4 + 20,
       }}
     >
-      <InfoRow y={0} label="State" value={state} digits={parts.state} />
-      <InfoRow y={ROW_H} label="Area Council" value={areaCouncil} digits={parts.areaCouncil} />
+      <InfoRow y={0} label="State" value={state} digits={parts.state} fontFamily={fontFamily} fontSize={fontSize} />
+      <InfoRow y={ROW_H} label="Area Council" value={areaCouncil} digits={parts.areaCouncil} fontFamily={fontFamily} fontSize={fontSize} />
       <InfoRow
         y={ROW_H * 2}
         label="Registration Area (WARD)"
         value={ward}
         digits={parts.ward}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
       />
       <InfoRow
         y={ROW_H * 3}
         label="Polling Unit"
         value={pollingUnit}
         digits={parts.pollingUnit}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
       />
     </div>
   );
@@ -223,7 +235,19 @@ const RESULTS_TABLE_W = 380;
 const RESULTS_KEY_COL_W = 28;
 const RESULTS_VALUE_COL_W = 64;
 
-function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
+function ResultsTable({
+  x,
+  y,
+  sn,
+  fontFamily,
+  fontSize,
+}: {
+  x: number;
+  y: number;
+  sn: string;
+  fontFamily: string;
+  fontSize: number;
+}) {
   return (
     <div style={{ position: "absolute", left: x, top: y, width: RESULTS_TABLE_W }}>
       <div
@@ -246,8 +270,8 @@ function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
           borderCollapse: "collapse",
           width: "100%",
           tableLayout: "fixed",
-          fontFamily: "Arial, sans-serif",
-          fontSize: 10.5,
+          fontFamily,
+          fontSize,
         }}
       >
         <tbody>
@@ -293,6 +317,7 @@ export function A4Preview() {
   const record = useElectionStore((s) =>
     s.records.find((r) => r.id === s.selectedId),
   );
+  const settings = useElectionStore((s) => s.settings);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -312,6 +337,10 @@ export function A4Preview() {
   }, []);
 
   const parts = parseDelimitationCode(record?.delimitationCode || "");
+
+  // Widest digit-box row is Polling Unit (3 boxes) -- table sits just past it.
+  const codeBoxesRight = COL_BOXES_X + BOX_SIZE * 3 + BOX_GAP * 2;
+  const resultsTableX = codeBoxesRight + CODE_TO_TABLE_GAP;
 
   return (
     <div
@@ -342,14 +371,19 @@ export function A4Preview() {
             ward={record?.ward || ""}
             pollingUnit={record?.pollingUnit || ""}
             parts={parts}
+            fontFamily={settings.infoFontFamily}
+            fontSize={settings.infoFontSize}
           />
 
-
-          <ResultsTable
-            x={PAGE_W - SECTION_X - RESULTS_TABLE_W}
-            y={140}
-            sn={record?.sn || "0001"}
-          />
+          {settings.showResultsTable && (
+            <ResultsTable
+              x={resultsTableX}
+              y={140}
+              sn={record?.sn || "0001"}
+              fontFamily={settings.resultsFontFamily}
+              fontSize={settings.resultsFontSize}
+            />
+          )}
         </div>
       </div>
     </div>
