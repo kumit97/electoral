@@ -9,6 +9,21 @@ const PAGE_H = 794;
 const BOX_SIZE = 24;
 const BOX_GAP = 3;
 
+// ---- LEFT INFORMATION SECTION -------------------------------------------
+// Fixed 5-column layout. All X coordinates are absolute and NEVER shift
+// depending on text length.
+const COL_LABEL_X = 24;
+const COL_LABEL_W = 178;
+const COL_DOTTED_X = 205;
+const COL_DOTTED_W = 275;
+const COL_CODE_LABEL_X = 488;
+const COL_CODE_LABEL_W = 34;
+const COL_BOXES_X = 528;
+
+const ROW_H = 46;
+const BOX_SIZE = 24;
+const BOX_GAP = 3;
+
 function DigitBoxes({ digits }: { digits: string }) {
   return (
     <div style={{ display: "flex", gap: BOX_GAP }}>
@@ -36,35 +51,7 @@ function DigitBoxes({ digits }: { digits: string }) {
   );
 }
 
-function DottedLine({ width }: { width: number }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: 0,
-        bottom: 0,
-        width,
-        height: 2,
-        backgroundImage:
-          "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
-        backgroundSize: "6px 2px",
-        backgroundRepeat: "repeat-x",
-        backgroundPosition: "left bottom",
-      }}
-    />
-  );
-}
-
-// Shared column geometry so every row aligns perfectly
-const LABEL_X = 40;
-const LABEL_W = 190;
-const DOTTED_X = LABEL_X + LABEL_W;
-const DOTTED_W = 258;
-const CODE_LABEL_X = DOTTED_X + DOTTED_W + 12;
-const CODE_LABEL_W = 34;
-const BOX_X = CODE_LABEL_X + CODE_LABEL_W + 8;
-
-function FormRow({
+function InfoRow({
   y,
   label,
   value,
@@ -75,56 +62,86 @@ function FormRow({
   value: string;
   digits: string;
 }) {
+  // Baseline of the dotted line inside the row
+  const BASELINE = ROW_H - 8;
+
   return (
-    <div style={{ position: "absolute", left: 0, top: y, width: "100%", height: 40 }}>
+    <>
+      {/* Column 1: Label */}
       <div
         style={{
           position: "absolute",
-          left: LABEL_X,
-          bottom: 4,
-          width: LABEL_W,
+          left: COL_LABEL_X,
+          top: y,
+          width: COL_LABEL_W,
+          height: ROW_H,
+          display: "flex",
+          alignItems: "flex-end",
           fontFamily: "Arial, sans-serif",
           fontSize: 13,
           fontWeight: 700,
+          lineHeight: 1.15,
         }}
       >
         {label}
       </div>
+
+      {/* Columns 2 + 3: fixed-width dotted line with the value centered above it */}
       <div
         style={{
           position: "absolute",
-          left: DOTTED_X,
-          bottom: 0,
-          width: DOTTED_W,
-          height: 32,
+          left: COL_DOTTED_X,
+          top: y,
+          width: COL_DOTTED_W,
+          height: ROW_H,
         }}
       >
+        {/* Centered value, wraps only inside this fixed area */}
         <div
           style={{
             position: "absolute",
             left: 0,
-            width: DOTTED_W,
-            bottom: 4,
+            right: 0,
+            bottom: BASELINE + 2,
+            maxHeight: ROW_H - 10,
+            overflow: "hidden",
             textAlign: "center",
             fontFamily: "Arial, sans-serif",
-            fontSize: 13,
+            fontSize: 12.5,
             fontWeight: 700,
-            lineHeight: 1.15,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            lineHeight: 1.1,
+            wordBreak: "break-word",
           }}
         >
           {value}
         </div>
-        <DottedLine width={DOTTED_W} />
+        {/* Fixed-width dotted line */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: BASELINE,
+            width: COL_DOTTED_W,
+            height: 2,
+            backgroundImage:
+              "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
+            backgroundSize: "6px 2px",
+            backgroundRepeat: "repeat-x",
+          }}
+        />
       </div>
+
+      {/* Column 4: Code label — fixed X on every row */}
       <div
         style={{
           position: "absolute",
-          left: CODE_LABEL_X,
-          bottom: 4,
-          width: CODE_LABEL_W,
+          left: COL_CODE_LABEL_X,
+          top: y,
+          width: COL_CODE_LABEL_W,
+          height: ROW_H,
+          display: "flex",
+          alignItems: "flex-end",
+          paddingBottom: 4,
           fontFamily: "Arial, sans-serif",
           fontSize: 13,
           fontWeight: 700,
@@ -132,15 +149,62 @@ function FormRow({
       >
         Code
       </div>
+
+      {/* Column 5: Code boxes — fixed X on every row */}
       <div
         style={{
           position: "absolute",
-          left: BOX_X,
-          bottom: 2,
+          left: COL_BOXES_X,
+          top: y,
+          height: ROW_H,
+          display: "flex",
+          alignItems: "flex-end",
+          paddingBottom: 2,
         }}
       >
         <DigitBoxes digits={digits} />
       </div>
+    </>
+  );
+}
+
+function InfoSection({
+  state,
+  areaCouncil,
+  ward,
+  pollingUnit,
+  parts,
+}: {
+  state: string;
+  areaCouncil: string;
+  ward: string;
+  pollingUnit: string;
+  parts: ReturnType<typeof parseDelimitationCode>;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 90,
+        width: 620,
+        height: ROW_H * 4 + 20,
+      }}
+    >
+      <InfoRow y={0} label="State" value={state} digits={parts.state} />
+      <InfoRow y={ROW_H} label="Area Council" value={areaCouncil} digits={parts.areaCouncil} />
+      <InfoRow
+        y={ROW_H * 2}
+        label="Registration Area (WARD)"
+        value={ward}
+        digits={parts.ward}
+      />
+      <InfoRow
+        y={ROW_H * 3}
+        label="Polling Unit"
+        value={pollingUnit}
+        digits={parts.pollingUnit}
+      />
     </div>
   );
 }
