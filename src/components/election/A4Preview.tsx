@@ -8,88 +8,161 @@ const PAGE_H = 794;
 
 
 // ---- LEFT INFORMATION SECTION -------------------------------------------
-// Rebuilt from scratch as a semantic HTML table with fixed column widths.
-// No Flexbox / Grid / space-between for column layout. Every row uses the
-// SAME <colgroup>, so Label / Value / Code / Boxes X positions are identical
-// on every row regardless of text length.
+// Fixed 5-column layout. All X coordinates are absolute and NEVER shift
+// depending on text length.
+const COL_LABEL_X = 24;
+const COL_LABEL_W = 178;
+const COL_DOTTED_X = 205;
+const COL_DOTTED_W = 275;
+const COL_CODE_LABEL_X = 488;
+const COL_CODE_LABEL_W = 34;
+const COL_BOXES_X = 528;
 
-const COL_LABEL_W = 170;
-const COL_VALUE_W = 360;
-const COL_CODE_W = 55;
-const COL_BOXES_W = 80;
-const TABLE_W = COL_LABEL_W + COL_VALUE_W + COL_CODE_W + COL_BOXES_W; // 665
-
+const ROW_H = 46;
 const BOX_SIZE = 24;
 const BOX_GAP = 3;
 
 function DigitBoxes({ digits }: { digits: string }) {
   return (
-    <span
-      style={{
-        display: "inline-block",
-        whiteSpace: "nowrap",
-        lineHeight: 0,
-      }}
-    >
+    <div style={{ display: "flex", gap: BOX_GAP }}>
       {digits.split("").map((d, i) => (
-        <span
+        <div
           key={i}
           style={{
-            display: "inline-block",
             width: BOX_SIZE,
             height: BOX_SIZE,
             boxSizing: "border-box",
             border: "1.2px solid #000",
-            textAlign: "center",
-            verticalAlign: "middle",
-            lineHeight: `${BOX_SIZE - 2}px`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             fontFamily: "Arial, sans-serif",
             fontSize: 13,
             fontWeight: 700,
-            marginLeft: i === 0 ? 0 : BOX_GAP,
+            lineHeight: 1,
           }}
         >
           {d}
-        </span>
+        </div>
       ))}
-    </span>
+    </div>
   );
 }
 
-function DottedLine() {
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: 2,
-        backgroundImage:
-          "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
-        backgroundSize: "6px 2px",
-        backgroundRepeat: "repeat-x",
-      }}
-    />
-  );
-}
+function InfoRow({
+  y,
+  label,
+  value,
+  digits,
+}: {
+  y: number;
+  label: string;
+  value: string;
+  digits: string;
+}) {
+  // Baseline of the dotted line inside the row
+  const BASELINE = ROW_H - 8;
 
-function ValueOverLine({ value }: { value: string }) {
   return (
-    <div style={{ width: "100%" }}>
+    <>
+      {/* Column 1: Label */}
       <div
         style={{
-          textAlign: "center",
+          position: "absolute",
+          left: COL_LABEL_X,
+          top: y,
+          width: COL_LABEL_W,
+          height: ROW_H,
+          display: "flex",
+          alignItems: "flex-end",
           fontFamily: "Arial, sans-serif",
-          fontSize: 12.5,
+          fontSize: 13,
           fontWeight: 700,
           lineHeight: 1.15,
-          wordBreak: "break-word",
-          paddingBottom: 2,
-          minHeight: 16,
         }}
       >
-        {value}
+        {label}
       </div>
-      <DottedLine />
-    </div>
+
+      {/* Columns 2 + 3: fixed-width dotted line with the value centered above it */}
+      <div
+        style={{
+          position: "absolute",
+          left: COL_DOTTED_X,
+          top: y,
+          width: COL_DOTTED_W,
+          height: ROW_H,
+        }}
+      >
+        {/* Centered value, wraps only inside this fixed area */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: BASELINE + 2,
+            maxHeight: ROW_H - 10,
+            overflow: "hidden",
+            textAlign: "center",
+            fontFamily: "Arial, sans-serif",
+            fontSize: 12.5,
+            fontWeight: 700,
+            lineHeight: 1.1,
+            wordBreak: "break-word",
+          }}
+        >
+          {value}
+        </div>
+        {/* Fixed-width dotted line */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: BASELINE,
+            width: COL_DOTTED_W,
+            height: 2,
+            backgroundImage:
+              "radial-gradient(circle, #000 0.9px, transparent 1.1px)",
+            backgroundSize: "6px 2px",
+            backgroundRepeat: "repeat-x",
+          }}
+        />
+      </div>
+
+      {/* Column 4: Code label — fixed X on every row */}
+      <div
+        style={{
+          position: "absolute",
+          left: COL_CODE_LABEL_X,
+          top: y,
+          width: COL_CODE_LABEL_W,
+          height: ROW_H,
+          display: "flex",
+          alignItems: "flex-end",
+          paddingBottom: 4,
+          fontFamily: "Arial, sans-serif",
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        Code
+      </div>
+
+      {/* Column 5: Code boxes — fixed X on every row */}
+      <div
+        style={{
+          position: "absolute",
+          left: COL_BOXES_X,
+          top: y,
+          height: ROW_H,
+          display: "flex",
+          alignItems: "flex-end",
+          paddingBottom: 2,
+        }}
+      >
+        <DigitBoxes digits={digits} />
+      </div>
+    </>
   );
 }
 
@@ -106,89 +179,33 @@ function InfoSection({
   pollingUnit: string;
   parts: ReturnType<typeof parseDelimitationCode>;
 }) {
-  const rows: Array<{ label: string; value: string; digits: string }> = [
-    { label: "State", value: state, digits: parts.state },
-    { label: "Area Council", value: areaCouncil, digits: parts.areaCouncil },
-    {
-      label: "Registration Area (WARD)",
-      value: ward,
-      digits: parts.ward,
-    },
-    { label: "Polling Unit", value: pollingUnit, digits: parts.pollingUnit },
-  ];
-
-  const labelCellStyle: React.CSSProperties = {
-    width: COL_LABEL_W,
-    padding: "10px 8px 6px 0",
-    verticalAlign: "bottom",
-    fontFamily: "Arial, sans-serif",
-    fontSize: 13,
-    fontWeight: 700,
-    lineHeight: 1.15,
-    whiteSpace: "normal",
-  };
-  const valueCellStyle: React.CSSProperties = {
-    width: COL_VALUE_W,
-    padding: "10px 8px 6px 8px",
-    verticalAlign: "bottom",
-  };
-  const codeCellStyle: React.CSSProperties = {
-    width: COL_CODE_W,
-    padding: "10px 4px 6px 12px",
-    verticalAlign: "bottom",
-    fontFamily: "Arial, sans-serif",
-    fontSize: 13,
-    fontWeight: 700,
-    whiteSpace: "nowrap",
-  };
-  const boxesCellStyle: React.CSSProperties = {
-    width: COL_BOXES_W,
-    padding: "10px 0 6px 0",
-    verticalAlign: "bottom",
-    whiteSpace: "nowrap",
-  };
-
   return (
     <div
       style={{
         position: "absolute",
         left: 0,
         top: 90,
+        width: 620,
+        height: ROW_H * 4 + 20,
       }}
     >
-      <table
-        style={{
-          width: TABLE_W,
-          tableLayout: "fixed",
-          borderCollapse: "collapse",
-          borderSpacing: 0,
-        }}
-      >
-        <colgroup>
-          <col style={{ width: COL_LABEL_W }} />
-          <col style={{ width: COL_VALUE_W }} />
-          <col style={{ width: COL_CODE_W }} />
-          <col style={{ width: COL_BOXES_W }} />
-        </colgroup>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.label}>
-              <td style={labelCellStyle}>{r.label}</td>
-              <td style={valueCellStyle}>
-                <ValueOverLine value={r.value} />
-              </td>
-              <td style={codeCellStyle}>Code</td>
-              <td style={boxesCellStyle}>
-                <DigitBoxes digits={r.digits} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <InfoRow y={0} label="State" value={state} digits={parts.state} />
+      <InfoRow y={ROW_H} label="Area Council" value={areaCouncil} digits={parts.areaCouncil} />
+      <InfoRow
+        y={ROW_H * 2}
+        label="Registration Area (WARD)"
+        value={ward}
+        digits={parts.ward}
+      />
+      <InfoRow
+        y={ROW_H * 3}
+        label="Polling Unit"
+        value={pollingUnit}
+        digits={parts.pollingUnit}
+      />
     </div>
   );
 }
-
 
 function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
   return (
