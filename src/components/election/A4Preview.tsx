@@ -2,9 +2,9 @@ import { useElectionStore } from "@/lib/election/store";
 import { parseDelimitationCode, RESULT_ROWS } from "@/lib/election/types";
 import { useEffect, useRef, useState } from "react";
 
-// A4 landscape at 96dpi: 1123 x 794. The reference form is wider than tall.
-const PAGE_W = 1123;
-const PAGE_H = 794;
+// A4 portrait at 96dpi: 794 x 1123.
+const PAGE_W = 794;
+const PAGE_H = 1123;
 
 
 // ---- LEFT INFORMATION SECTION -------------------------------------------
@@ -21,10 +21,12 @@ const ROW_H = 54;
 const BOX_SIZE = 26;
 const BOX_GAP = 3;
 
-const VALUE_FONT =
-  "'Times New Roman', 'Liberation Serif', Georgia, serif";
-const VALUE_SIZE = 15;
-const LABEL_SIZE = 14;
+// Vertical gap between the info section and the results table below it.
+// Must clear the S/N label, which floats 50px above the table itself.
+const SECTION_TO_TABLE_GAP = 70;
+
+const INFO_SECTION_TOP = 90;
+const INFO_SECTION_HEIGHT = ROW_H * 4 + 20;
 
 function DigitBoxes({ digits }: { digits: string }) {
   return (
@@ -58,14 +60,19 @@ function InfoRow({
   label,
   value,
   digits,
+  fontFamily,
+  fontSize,
 }: {
   y: number;
   label: string;
   value: string;
   digits: string;
+  fontFamily: string;
+  fontSize: number;
 }) {
   const BASELINE = ROW_H - 10;
   const INLINE_RIGHT = COL_CODE_LABEL_X - SECTION_X - 8;
+  const labelSize = Math.round(fontSize * 0.93);
 
   return (
     <>
@@ -92,8 +99,8 @@ function InfoRow({
         >
           <span
             style={{
-              fontFamily: VALUE_FONT,
-              fontSize: LABEL_SIZE,
+              fontFamily,
+              fontSize: labelSize,
               fontWeight: 700,
               lineHeight: 1,
               whiteSpace: "nowrap",
@@ -130,8 +137,8 @@ function InfoRow({
             textAlign: "center",
             paddingLeft: `calc(${label.length}ch + 12px)`,
             paddingRight: 8,
-            fontFamily: VALUE_FONT,
-            fontSize: VALUE_SIZE,
+            fontFamily,
+            fontSize,
             fontWeight: 700,
             fontStyle: "italic",
             lineHeight: 1.15,
@@ -184,36 +191,44 @@ function InfoSection({
   ward,
   pollingUnit,
   parts,
+  fontFamily,
+  fontSize,
 }: {
   state: string;
   areaCouncil: string;
   ward: string;
   pollingUnit: string;
   parts: ReturnType<typeof parseDelimitationCode>;
+  fontFamily: string;
+  fontSize: number;
 }) {
   return (
     <div
       style={{
         position: "absolute",
         left: 0,
-        top: 90,
+        top: INFO_SECTION_TOP,
         width: SECTION_W,
-        height: ROW_H * 4 + 20,
+        height: INFO_SECTION_HEIGHT,
       }}
     >
-      <InfoRow y={0} label="State" value={state} digits={parts.state} />
-      <InfoRow y={ROW_H} label="Area Council" value={areaCouncil} digits={parts.areaCouncil} />
+      <InfoRow y={0} label="State" value={state} digits={parts.state} fontFamily={fontFamily} fontSize={fontSize} />
+      <InfoRow y={ROW_H} label="Area Council" value={areaCouncil} digits={parts.areaCouncil} fontFamily={fontFamily} fontSize={fontSize} />
       <InfoRow
         y={ROW_H * 2}
         label="Registration Area (WARD)"
         value={ward}
         digits={parts.ward}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
       />
       <InfoRow
         y={ROW_H * 3}
         label="Polling Unit"
         value={pollingUnit}
         digits={parts.pollingUnit}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
       />
     </div>
   );
@@ -223,7 +238,19 @@ const RESULTS_TABLE_W = 380;
 const RESULTS_KEY_COL_W = 28;
 const RESULTS_VALUE_COL_W = 64;
 
-function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
+function ResultsTable({
+  x,
+  y,
+  sn,
+  fontFamily,
+  fontSize,
+}: {
+  x: number;
+  y: number;
+  sn: string;
+  fontFamily: string;
+  fontSize: number;
+}) {
   return (
     <div style={{ position: "absolute", left: x, top: y, width: RESULTS_TABLE_W }}>
       <div
@@ -246,8 +273,8 @@ function ResultsTable({ x, y, sn }: { x: number; y: number; sn: string }) {
           borderCollapse: "collapse",
           width: "100%",
           tableLayout: "fixed",
-          fontFamily: "Arial, sans-serif",
-          fontSize: 10.5,
+          fontFamily,
+          fontSize,
         }}
       >
         <tbody>
@@ -293,6 +320,7 @@ export function A4Preview() {
   const record = useElectionStore((s) =>
     s.records.find((r) => r.id === s.selectedId),
   );
+  const settings = useElectionStore((s) => s.settings);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -312,6 +340,11 @@ export function A4Preview() {
   }, []);
 
   const parts = parseDelimitationCode(record?.delimitationCode || "");
+
+  // Portrait is narrower, so the results table stacks below the info
+  // section (left-aligned, same margin) instead of sitting beside it.
+  const resultsTableX = SECTION_X;
+  const resultsTableY = INFO_SECTION_TOP + INFO_SECTION_HEIGHT + SECTION_TO_TABLE_GAP;
 
   return (
     <div
@@ -342,14 +375,19 @@ export function A4Preview() {
             ward={record?.ward || ""}
             pollingUnit={record?.pollingUnit || ""}
             parts={parts}
+            fontFamily={settings.infoFontFamily}
+            fontSize={settings.infoFontSize}
           />
 
-
-          <ResultsTable
-            x={PAGE_W - SECTION_X - RESULTS_TABLE_W}
-            y={140}
-            sn={record?.sn || "0001"}
-          />
+          {settings.showResultsTable && (
+            <ResultsTable
+              x={resultsTableX}
+              y={140}
+              sn={record?.sn || "0001"}
+              fontFamily={settings.resultsFontFamily}
+              fontSize={settings.resultsFontSize}
+            />
+          )}
         </div>
       </div>
     </div>
