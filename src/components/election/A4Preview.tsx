@@ -6,8 +6,6 @@ import { useEffect, useRef, useState } from "react";
 const PAGE_W = 1123;
 const PAGE_H = 794;
 
-const BOX_SIZE = 24;
-const BOX_GAP = 3;
 
 // ---- LEFT INFORMATION SECTION -------------------------------------------
 // Fixed 5-column layout. All X coordinates are absolute and NEVER shift
